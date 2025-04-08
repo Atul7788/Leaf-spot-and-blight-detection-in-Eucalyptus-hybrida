@@ -1,0 +1,80 @@
+import streamlit as st
+from PIL import Image
+import tensorflow as tf
+
+# Define class names globally
+class_names = ["Eucalyptus hybrida__Blight", "Eucalyptus hybrida__Healthy", "Eucalyptus hybrida__Leaf spot"]
+
+
+# Function to preprocess the uploaded image
+def preprocess_image(image):
+    img = Image.open(image)
+    img = img.resize((256, 256))  # Resize to model input size
+    img = tf.convert_to_tensor(img)  # Convert to TensorFlow tensor
+    img = tf.cast(img, dtype=tf.float32)  # Convert to float32
+    img = img / 255.0  # Normalize pixel values
+    img = tf.expand_dims(img, axis=0)  # Add batch dimension
+    return img
+
+
+# Function to make predictions using your loaded model
+def make_prediction(model, image):
+    predictions = model.predict(image)  # Pass the preprocessed image to your model
+    sorted_indices = tf.argsort(predictions[0])[::-1]  # Sort indices of predictions in descending order
+    predicted_class = class_names[sorted_indices[0]]
+    second_highest_class = class_names[sorted_indices[1]]
+    return predicted_class, second_highest_class, predictions[0], sorted_indices
+
+def disease_prediction(disease_name):
+    disease_info = {
+            "Eucalyptus hybrida__Leaf spot": "Leaf spot disease in Eucalyptus hybrida is caused by fungal pathogens like Cercospora, Pestalotiopsis, and Alternaria spp. It appears as brown or black spots on leaves, leading to premature leaf fall, reduced photosynthesis, and stunted growth. High humidity and poor air circulation favor disease development, especially in nurseries and plantations. 
+                                           Management practices- Ensure proper spacing and pruning to improve air circulation. Remove and destroy infected leaves. Practice crop rotation and use resistant varieties if available. Regular monitoring and maintaining field hygiene are crucial to prevent disease spread and ensure healthy tree growth. During a severe disease outbreak, recommended fungicides can be used",
+            "Eucalyptus hybrida_Blight": "Blight in Eucalyptus hybrida is primarily caused by fungi like Botryosphaeria and Colletotrichum spp. It results in dark lesions on leaves, stems, and twigs, often leading to dieback and reduced plant vigor. Wet, warm conditions favor its spread, especially in densely planted or poorly managed plantations and nurseries.
+                                          Management practices- Promote good airflow by proper spacing and pruning. Remove and burn affected plant parts. Avoid overhead irrigation and reduce plant stress. Use disease-free planting material and follow routine monitoring to detect and control outbreaks early. During a severe disease outbreak, recommended fungicides can be used.",
+            "Eucalyptus hybrida_healthy": "A healthy Eucalyptus hybrida leaf is green, smooth, and free from spots or lesions. It has a firm texture with no signs of yellowing, wilting, or pest damage. Healthy leaves indicate optimal photosynthesis, strong disease resistance, and overall plant vigor, reflecting good soil health, proper nutrition, and ideal growing conditions."
+    }
+    return disease_info.get(disease_name, "Information not available.")
+
+
+def main():
+    st.title("Eucalyptus hybrida (Leaf spot and blight prediction)  App")
+
+    st.write("Upload an image to classify it. The app supports the following diseases:")
+    
+        st.write("""
+        - Eucalyptus hybrida__Leaf spot
+        - Eucalyptus hybrida_Blight
+        - Eucalyptus hybrida_healthy
+        """)
+    
+
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+
+    if uploaded_file is not None:
+        try:
+            with st.spinner("Loading and processing the image..."):
+                # Preprocess the image
+                image = preprocess_image(uploaded_file)
+
+                # Load your pre-trained model (replace with your model loading logic)
+                model = tf.keras.models.load_model("F1_new_c")  # Replace with your model path
+
+                # Make prediction and display results
+                predicted_class, second_highest_class, probabilities, sorted_indices = make_prediction(model, image)
+                car_info = get_car_info(predicted_class)
+
+                st.subheader(
+                    f"The car shown in the image is   : {predicted_class} ({probabilities[sorted_indices[0]] * 100:.2f}%)")
+                st.write(
+                    f"The second most probable car is   : {second_highest_class} ({probabilities[sorted_indices[1]] * 100:.2f}%)")
+                st.image(uploaded_file)
+                st.subheader("Here Is The Info About : "+predicted_class)
+                st.write(car_info)
+
+
+
+        except Exception as e:
+            st.error(f"Error processing image: {e}")
+
+
+main()
