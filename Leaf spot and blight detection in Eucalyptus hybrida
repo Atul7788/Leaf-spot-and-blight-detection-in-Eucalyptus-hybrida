@@ -57,19 +57,18 @@ def main():
                 image = preprocess_image(uploaded_file)
 
                 # Load your pre-trained model (replace with your model loading logic)
-                model = tf.keras.models.load_model("F1_new_c")  # Replace with your model path
+                model = tf.keras.models.load_model("C:\Users\atulk\code\Eucalyptus disease\saved_model\1\Atul Project.py")  # Replace with your model path
 
                 # Make prediction and display results
                 predicted_class, second_highest_class, probabilities, sorted_indices = make_prediction(model, image)
-                car_info = get_car_info(predicted_class)
+                disease_info = get_disease_info(predicted_class)
 
                 st.subheader(
-                    f"The car shown in the image is   : {predicted_class} ({probabilities[sorted_indices[0]] * 100:.2f}%)")
-                st.write(
-                    f"The second most probable car is   : {second_highest_class} ({probabilities[sorted_indices[1]] * 100:.2f}%)")
+                    f"The disease shown in the image is   : {predicted_class} ({probabilities[sorted_indices[0]] * 100:.2f}%)")
+                
                 st.image(uploaded_file)
                 st.subheader("Here Is The Info About : "+predicted_class)
-                st.write(car_info)
+                st.write(disease_info)
 
 
 
@@ -78,3 +77,5 @@ def main():
 
 
 main()
+
+
